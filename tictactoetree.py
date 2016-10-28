@@ -141,7 +141,7 @@ def test():
     draw_ratio = sum(list(map(lambda e: e == DRAW, results))) / len(results)
 
     end = time.time()
-    print(end - start)
+    #print(end - start)
 
     # visit(empty_board, True)
     # print(len(results))
@@ -151,11 +151,20 @@ def test():
 
 
 def board_is_empty(board):
+    return board == empty_board
+    # empty_row = [E, E, E]
+    # if board[0] == empty_row and board[1] == empty_row and board[2] == empty_row:
+    #     return True
+    # return False
+
+
+def player_on_edge(board, player_is_x):
+    symbol = SYMBOL[player_is_x]
     # oh yeah, that's quick and dirty baby...
-    empty_row = [E, E, E]
-    if board[0] == empty_row and board[1] == empty_row and board[2] == empty_row:
-        return True
-    return False
+    return board == [[E, E, E], [E, E, E], [E, E, symbol]] or \
+           board == [[E, E, E], [E, E, E], [symbol, E, E]] or \
+           board == [[symbol, E, E], [E, E, E], [E, E, E]] or \
+           board == [[E, E, symbol], [E, E, E], [E, E, E]]
 
 
 def get_win_lose_draw_ratio(board, player_is_x):
@@ -171,35 +180,46 @@ def next_move(board, player_is_x):
     if board_is_empty(board):
         return 0, 0
 
+    win_move = get_winning_move(board, player_is_x)
+    if win_move != NOT_FOUND:
+        return win_move
+
+    if player_on_edge(board, not player_is_x):
+        return 1, 1
+
     symbol = SYMBOL[player_is_x]
-    best_solution = (NOT_FOUND, NOT_FOUND)
-
+    # win rate for us, win rate for opposing player, move
+    best_solution = (NOT_FOUND, NOT_FOUND, NOT_FOUND)
     for empty_space in get_empty_spaces(board):
-
-        win_move = get_winning_move(board, player_is_x)
-        if win_move != NOT_FOUND:
-            return win_move
-
         new_board = copy.deepcopy(board)
         # place the active player's symbol in every empty place and run the game for the opposing player
         new_board[empty_space[0]][empty_space[1]] = symbol
         ratio = get_win_lose_draw_ratio(new_board, not player_is_x)
-        win_rate_for_active_player = ratio[0] if player_is_x else ratio[1]
+        win_rate_for_our_player = ratio[0] if player_is_x else ratio[1]
+        win_rate_for_opponent = ratio[1] if player_is_x else ratio[0]
 
-        print("move: ")
-        print(empty_space)
-        print(ratio)
-        print("")
+        # print("move: ")
+        # print(empty_space)
+        # print(ratio)
+        # print("")
 
-        if best_solution[0] == NOT_FOUND or best_solution[0] < win_rate_for_active_player:
-            best_solution = (win_rate_for_active_player, empty_space)
+        # minimize opponent's win rate for the remaining game
+        if best_solution[0] == NOT_FOUND or win_rate_for_opponent < best_solution[1]:
+            best_solution = (win_rate_for_our_player, win_rate_for_opponent, empty_space)
+        # in case of ties decide using our own win ration
+        elif win_rate_for_opponent == best_solution[1] and win_rate_for_our_player > \
+                best_solution[0]:
+            best_solution = (win_rate_for_our_player, win_rate_for_opponent, empty_space)
 
-    return best_solution[1]
+    return best_solution[2]
 
 
 if __name__ == "__main__":
     player_is_x = input().strip() == X
     board = [[j for j in input().strip()] for i in range(BOARD_SIZE)]
+
+    # player_is_x = False
+    # board = [[E, E, E], [E, E, E], [E, E, X]]
     # print_grid(board)
     move = next_move(board, player_is_x)
     print(str(move[0]) + " " + str(move[1]))
