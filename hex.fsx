@@ -21,4 +21,14 @@ let insert (grid:string list) (element:char) (r:int) (c:int) =
     let updatedLine = insert grid.[r] element c
     grid.[0..r-1] @ (updatedLine :: grid.[r+1..N-1])
 
+let isWonByBlue grid =
+    let neighbours grid r c = 
+
+
+    //let visit grid r c =
+
+
+
+
+
 printGridList (insert grid '@' 10 10)
